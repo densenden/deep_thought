@@ -209,6 +209,41 @@
                 font-size: 0.9em;
             }
         }
+
+        .logo-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: auto;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo-container img:hover {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .logo-container {
+                width: 150px;
+                bottom: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-container {
+                width: 120px;
+                bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -250,6 +285,10 @@
             <h2>Universal Wisdom</h2>
             <p>Don't Panic! The answer might be simpler than you think.</p>
         </div>
+    </div>
+
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='images/StudioSen2024slim_42.svg') }}" alt="StudioSen Logo">
     </div>
 
     <script>
