@@ -6,6 +6,9 @@
 
 > "The Answer to Life, the Universe, and Everything" - powered by modern AI
 
+<img width="960" alt="Screenshot 2025-03-27 at 13 09 21" src="https://github.com/user-attachments/assets/7ae81dcd-3bee-44ae-857a-e46f2037c73e" />
+
+
 A web application inspired by "The Hitchhiker's Guide to the Galaxy", featuring Deep Thought - now enhanced with actual AI capabilities through ChatGPT integration.
 
 ## ✨ Features
