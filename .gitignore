@@ -40,3 +40,6 @@ ENV/
 ehthumbs.db
 Thumbs.db 
 .vercel
+
+# Environment Variables
+.env

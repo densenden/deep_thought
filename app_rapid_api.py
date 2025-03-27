@@ -3,11 +3,15 @@ import requests
 import json
 import os
 from requests.exceptions import Timeout, RequestException
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # RapidAPI Configuration
 url = "https://chatgpt-42.p.rapidapi.com/aitohuman"
 headers = {
-    "x-rapidapi-key": os.environ.get("RAPIDAPI_KEY", "87c1e3de80msh3a80d54ff5955dbp1416f8jsn4e95b32535c2"),
+    "x-rapidapi-key": os.environ.get("RAPIDAPI_KEY"),
     "x-rapidapi-host": "chatgpt-42.p.rapidapi.com",
     "Content-Type": "application/json"
 }
