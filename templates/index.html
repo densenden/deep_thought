@@ -168,6 +168,22 @@ document.getElementById('question-form').addEventListener('submit', function(e) 
     answerBox.classList.remove('visible');
     loadingContainer.style.display = 'block';
     
+    // Start the API call immediately
+    const apiCall = fetch('/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `question=${encodeURIComponent(question)}`
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Parse the response HTML to get the answer
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        return doc.getElementById('answer').textContent;
+    });
+    
     // Simulate loading progress
     let progress = 0;
     const progressBar = document.getElementById('progress');
@@ -180,33 +196,18 @@ document.getElementById('question-form').addEventListener('submit', function(e) 
         
         if (progress >= 100) {
             clearInterval(interval);
-            setTimeout(() => {
+            // When loading is complete, show the answer
+            apiCall.then(newAnswer => {
                 loadingContainer.style.display = 'none';
-                // Make the API call
-                fetch('/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `question=${encodeURIComponent(question)}`
-                })
-                .then(response => response.text())
-                .then(html => {
-                    // Parse the response HTML to get the answer
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newAnswer = doc.getElementById('answer').textContent;
-                    
-                    // Update the answer and question
-                    askedQuestion.textContent = `You asked: ${question}`;
-                    answerText.textContent = newAnswer;
-                    answerBox.classList.add('visible');
-                })
-                .catch(error => {
-                    answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
-                    answerBox.classList.add('visible');
-                });
-            }, 500);
+                askedQuestion.textContent = `You asked: ${question}`;
+                answerText.textContent = newAnswer;
+                answerBox.classList.add('visible');
+            })
+            .catch(error => {
+                loadingContainer.style.display = 'none';
+                answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
+                answerBox.classList.add('visible');
+            });
         }
     }, 100); // Will take 10 seconds to complete
 });
