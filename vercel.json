@@ -3,7 +3,10 @@
     "builds": [
         {
             "src": "app_rapid_api.py",
-            "use": "@vercel/python"
+            "use": "@vercel/python",
+            "config": {
+                "maxDuration": 60
+            }
         }
     ],
     "routes": [
@@ -11,10 +14,5 @@
             "src": "/(.*)",
             "dest": "app_rapid_api.py"
         }
-    ],
-    "functions": {
-        "app_rapid_api.py": {
-            "maxDuration": 60
-        }
-    }
+    ]
 } 
