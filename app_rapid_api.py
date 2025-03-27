@@ -4,9 +4,15 @@ import json
 import os
 from requests.exceptions import Timeout, RequestException
 from dotenv import load_dotenv
+import sys
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging for Vercel
+def log_to_vercel(message):
+    print(message, file=sys.stdout)
+    sys.stdout.flush()
 
 # RapidAPI Configuration
 url = "https://chatgpt-42.p.rapidapi.com/aitohuman"
@@ -48,7 +54,7 @@ def home():
     
     if request.method == 'POST':
         question = request.form.get('question')
-        print(f"User asked: {question}")
+        log_to_vercel(f"User asked: {question}")
         
         # Prepare the payload for RapidAPI
         payload = {
@@ -67,19 +73,19 @@ def home():
         
         try:
             # Send API request with timeout
-            print("Sending request to RapidAPI...")
-            print(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
-            print(f"Request URL: {url}")
-            print(f"Request Headers: {json.dumps(headers, indent=2)}")
-            print(f"Request Payload: {json.dumps(payload, indent=2)}")
+            log_to_vercel("Sending request to RapidAPI...")
+            log_to_vercel(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
+            log_to_vercel(f"Request URL: {url}")
+            log_to_vercel(f"Request Headers: {json.dumps(headers, indent=2)}")
+            log_to_vercel(f"Request Payload: {json.dumps(payload, indent=2)}")
             
             response = requests.post(url, json=payload, headers=headers, timeout=30)
-            print(f"Status Code: {response.status_code}")
-            print(f"Response Headers: {dict(response.headers)}")
+            log_to_vercel(f"Status Code: {response.status_code}")
+            log_to_vercel(f"Response Headers: {dict(response.headers)}")
             
             if response.status_code == 200:
                 response_data = response.json()
-                print(f"Full Response Data: {json.dumps(response_data, indent=2)}")
+                log_to_vercel(f"Full Response Data: {json.dumps(response_data, indent=2)}")
                 
                 # Try different response structures
                 if isinstance(response_data, dict):
@@ -92,28 +98,28 @@ def home():
                                 answer = response_data[key][0] if response_data[key] else "No response generated."
                             else:
                                 answer = response_data[key]
-                            print(f"Found answer in key: {key}")
+                            log_to_vercel(f"Found answer in key: {key}")
                             break
                     else:
                         # Fallback if no known keys found
                         answer = str(response_data)
-                        print("No known response keys found, using raw response")
+                        log_to_vercel("No known response keys found, using raw response")
                 else:
                     answer = str(response_data)
-                    print("Response is not a dictionary, using raw response")
+                    log_to_vercel("Response is not a dictionary, using raw response")
             else:
                 error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
-                print(f"API Error Response: {error_message}")
+                log_to_vercel(f"API Error Response: {error_message}")
                 answer = f"API Error: {error_message}"
                 
         except Timeout:
-            print("Request timed out")
+            log_to_vercel("Request timed out")
             answer = "I apologize, but my quantum processors seem to be experiencing a temporal dilation. Please try again in a moment."
         except RequestException as e:
-            print(f"Request error: {str(e)}")
+            log_to_vercel(f"Request error: {str(e)}")
             answer = "I apologize, but my neural pathways are temporarily misaligned. Please try again in a moment."
         except Exception as e:
-            print(f"Error: {str(e)}")
+            log_to_vercel(f"Error: {str(e)}")
             answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
     
     return render_template('index.html', answer=answer, question=question)
