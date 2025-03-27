@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import requests
 import json
 import os
+from requests.exceptions import Timeout, RequestException
 
 # RapidAPI Configuration
 url = "https://chatgpt-42.p.rapidapi.com/aitohuman"
@@ -61,12 +62,10 @@ def home():
         }
         
         try:
-            # Send API request and log response
+            # Send API request with timeout
             print("Sending request to RapidAPI...")
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
             print(f"Status Code: {response.status_code}")
-            print(f"Response Headers: {response.headers}")
-            print(f"Response Content: {response.text}")
             
             if response.status_code == 200:
                 response_data = response.json()
@@ -93,9 +92,15 @@ def home():
                 error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
                 answer = f"API Error: {error_message}"
                 
+        except Timeout:
+            print("Request timed out")
+            answer = "I apologize, but my quantum processors seem to be experiencing a temporal dilation. Please try again in a moment."
+        except RequestException as e:
+            print(f"Request error: {str(e)}")
+            answer = "I apologize, but my neural pathways are temporarily misaligned. Please try again in a moment."
         except Exception as e:
             print(f"Error: {str(e)}")
-            answer = f"Error: {str(e)}"
+            answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
     
     return render_template('index.html', answer=answer, question=question)
 
