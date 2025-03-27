@@ -74,11 +74,45 @@
             font-size: 2.5em;
             margin-bottom: 20px;
         }
-        .dont-panic {
-            font-size: 0.8em;
-            color: #e6e6e6;
-            margin-top: 20px;
+        .loading-container {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(66, 184, 131, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress {
+            width: 0%;
+            height: 100%;
+            background-color: #42b883;
+            transition: width 0.5s ease;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .loading-text {
+            color: #42b883;
+            margin-top: 10px;
             font-style: italic;
+        }
+        .previous-question {
+            color: #42b883;
+            font-style: italic;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        #answer-box {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #answer-box.visible {
+            opacity: 1;
         }
     </style>
 </head>
@@ -89,15 +123,26 @@
 <div class="container">
     <div class="glass-box">
         <h2>Ask a Question</h2>
-        <form action="/" method="post">
-            <input type="text" id="question" name="question" required placeholder="What is the meaning of life?">
+        <form id="question-form" action="/" method="post">
+            <input type="text" id="question" name="question" required placeholder="What is the meaning of life?" value="{{ question }}">
             <input type="submit" value="Calculate Answer">
         </form>
     </div>
 
     <div class="glass-box">
         <h2>Deep Thought's Answer</h2>
-        <p id="answer">{{ answer }}</p>
+        <div class="loading-container" id="loading-container">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <p class="loading-text">Skipping 7.5 million years with quantum computing... <span id="progress-text">0</span>%</p>
+        </div>
+        <div id="answer-box">
+            {% if question %}
+            <p class="previous-question">You asked: {{ question }}</p>
+            {% endif %}
+            <p id="answer">{{ answer }}</p>
+        </div>
     </div>
 
     <div class="glass-box">
@@ -105,6 +150,39 @@
         <p>Don't Panic! The answer might be simpler than you think.</p>
     </div>
 </div>
+
+<script>
+document.getElementById('question-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Hide answer and show loading
+    const answerBox = document.getElementById('answer-box');
+    const loadingContainer = document.getElementById('loading-container');
+    answerBox.style.opacity = '0';
+    loadingContainer.style.display = 'block';
+    
+    // Simulate loading progress
+    let progress = 0;
+    const progressBar = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    
+    const interval = setInterval(() => {
+        progress += 1;
+        progressBar.style.width = `${progress}%`;
+        progressText.textContent = progress;
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                loadingContainer.style.display = 'none';
+                answerBox.style.opacity = '1';
+                // Submit the form for real
+                this.submit();
+            }, 500);
+        }
+    }, 100); // Will take 10 seconds to complete
+});
+</script>
 
 </body>
 </html> 

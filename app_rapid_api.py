@@ -26,6 +26,8 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def home():
     answer = "I am Deep Thought, the greatest computer ever built. Ask me anything."
+    question = ""
+    
     if request.method == 'POST':
         question = request.form.get('question')
         print(f"User asked: {question}")
@@ -82,7 +84,7 @@ def home():
             print(f"Error: {str(e)}")
             answer = f"Error: {str(e)}"
     
-    return render_template('index.html', answer=answer)
+    return render_template('index.html', answer=answer, question=question)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001) 
