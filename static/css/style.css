@@ -157,6 +157,14 @@ h2 {
     font-weight: bold;
 }
 
+/* Previous question styles */
+.previous-question {
+    color: #42b883;
+    font-style: italic;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
