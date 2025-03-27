@@ -266,8 +266,11 @@
         answerBox.classList.remove('visible');
         loadingContainer.style.display = 'block';
         
+        let apiResponse = null;
+        let apiError = null;
+        
         // Start the API call immediately
-        const apiCall = fetch('/', {
+        fetch('/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -286,7 +289,8 @@
                 const jsonMatch = html.match(/\{.*\}/);
                 if (jsonMatch) {
                     const jsonData = JSON.parse(jsonMatch[0]);
-                    return jsonData.answer || jsonData.response || jsonData.message || "No answer found in response.";
+                    apiResponse = jsonData.answer || jsonData.response || jsonData.message || "No answer found in response.";
+                    return;
                 }
                 
                 // If not JSON, try to parse as HTML
@@ -295,37 +299,26 @@
                 const answerElement = doc.getElementById('answer');
                 
                 if (answerElement) {
-                    return answerElement.textContent;
+                    apiResponse = answerElement.textContent;
+                    return;
                 }
                 
                 // If no answer element found, try to find any text content
                 const textContent = doc.body.textContent;
                 if (textContent) {
-                    return textContent.trim();
+                    apiResponse = textContent.trim();
+                    return;
                 }
                 
-                return "I apologize, but I seem to be experiencing a temporary computational anomaly.";
+                apiResponse = "I apologize, but I seem to be experiencing a temporary computational anomaly.";
             } catch (error) {
                 console.error('Error parsing response:', error);
-                return "I apologize, but I seem to be experiencing a temporary computational anomaly.";
+                apiResponse = "I apologize, but I seem to be experiencing a temporary computational anomaly.";
             }
-        })
-        .then(newAnswer => {
-            setTimeout(() => {
-                loadingContainer.style.display = 'none';
-                askedQuestion.textContent = `You asked: ${question}`;
-                answerText.textContent = newAnswer;
-                answerBox.classList.add('visible');
-            }, 500);
         })
         .catch(error => {
             console.error('API Error:', error);
-            // Only show error after loading animation is complete
-            setTimeout(() => {
-                loadingContainer.style.display = 'none';
-                answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
-                answerBox.classList.add('visible');
-            }, 500);
+            apiError = error;
         });
         
         // Simulate loading progress
@@ -340,6 +333,19 @@
             
             if (progress >= 100) {
                 clearInterval(interval);
+                // Wait a moment after the progress bar reaches 100%
+                setTimeout(() => {
+                    loadingContainer.style.display = 'none';
+                    askedQuestion.textContent = `You asked: ${question}`;
+                    
+                    if (apiError) {
+                        answerText.innerHTML = `<span class="error-message">Error: ${apiError.message}</span>`;
+                    } else {
+                        answerText.textContent = apiResponse || "I apologize, but I seem to be experiencing a temporal anomaly. Please try again.";
+                    }
+                    
+                    answerBox.classList.add('visible');
+                }, 500);
             }
         }, 100); // Update every 100ms
     });
