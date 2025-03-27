@@ -84,4 +84,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Powered by ChatGPT through RapidAPI
 
 ---
-Made with ❤️ by Dennis 
+Made with ❤️ in masterschool
