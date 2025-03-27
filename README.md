@@ -20,8 +20,8 @@ A web application inspired by "The Hitchhiker's Guide to the Galaxy", featuring 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/deep-thought-ai.git
-cd deep-thought-ai
+git clone git@github.com:densenden/deep_thought.git
+cd deep-thought
 ```
 
 2. Install dependencies:
@@ -81,4 +81,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Powered by ChatGPT through RapidAPI
 
 ---
-Made with ❤️ by [Your Name] 
+Made with ❤️ by Dennis 
