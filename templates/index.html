@@ -334,9 +334,12 @@
                 })
                 .catch(error => {
                     console.error('API Error:', error);
-                    loadingContainer.style.display = 'none';
-                    answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
-                    answerBox.classList.add('visible');
+                    // Only show error after loading animation is complete
+                    setTimeout(() => {
+                        loadingContainer.style.display = 'none';
+                        answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
+                        answerBox.classList.add('visible');
+                    }, 500);
                 });
             }
         }, 100); // Update every 100ms
