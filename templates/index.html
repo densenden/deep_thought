@@ -309,6 +309,23 @@
                 console.error('Error parsing response:', error);
                 return "I apologize, but I seem to be experiencing a temporary computational anomaly.";
             }
+        })
+        .then(newAnswer => {
+            setTimeout(() => {
+                loadingContainer.style.display = 'none';
+                askedQuestion.textContent = `You asked: ${question}`;
+                answerText.textContent = newAnswer;
+                answerBox.classList.add('visible');
+            }, 500);
+        })
+        .catch(error => {
+            console.error('API Error:', error);
+            // Only show error after loading animation is complete
+            setTimeout(() => {
+                loadingContainer.style.display = 'none';
+                answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
+                answerBox.classList.add('visible');
+            }, 500);
         });
         
         // Simulate loading progress
@@ -323,24 +340,6 @@
             
             if (progress >= 100) {
                 clearInterval(interval);
-                // When loading is complete, show the answer
-                apiCall.then(newAnswer => {
-                    setTimeout(() => {
-                        loadingContainer.style.display = 'none';
-                        askedQuestion.textContent = `You asked: ${question}`;
-                        answerText.textContent = newAnswer;
-                        answerBox.classList.add('visible');
-                    }, 500);
-                })
-                .catch(error => {
-                    console.error('API Error:', error);
-                    // Only show error after loading animation is complete
-                    setTimeout(() => {
-                        loadingContainer.style.display = 'none';
-                        answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
-                        answerBox.classList.add('visible');
-                    }, 500);
-                });
             }
         }, 100); // Update every 100ms
     });
