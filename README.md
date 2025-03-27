@@ -4,12 +4,19 @@
 ![Flask](https://img.shields.io/badge/Flask-3.0.2-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
+
+
 > "The Answer to Life, the Universe, and Everything" - powered by modern AI
 
 <img width="960" alt="Screenshot 2025-03-27 at 13 09 21" src="https://github.com/user-attachments/assets/7ae81dcd-3bee-44ae-857a-e46f2037c73e" />
 
 
 A web application inspired by "The Hitchhiker's Guide to the Galaxy", featuring Deep Thought - now enhanced with actual AI capabilities through ChatGPT integration.
+
+## 🌐 Live-Version
+
+Besuchen Sie die Live-Version der Anwendung:
+[Deep Thought - Live Demo](https://deepthought-omega.vercel.app/)
 
 ## ✨ Features
 
@@ -18,6 +25,9 @@ A web application inspired by "The Hitchhiker's Guide to the Galaxy", featuring 
 - 🌌 Sci-fi themed user interface
 - 💬 Real-time question answering
 - 🎭 Character-based responses in Deep Thought's style
+- 🚀 13-Sekunden Ladeanimation für authentisches Erlebnis
+- 📱 Responsive Design für alle Geräte
+- 🤖 Authentische Deep Thought Persönlichkeit
 
 ## 🚀 Quick Start
 
@@ -49,6 +59,7 @@ python app_rapid_api.py
 - Flask 3.0.2
 - RapidAPI ChatGPT Integration
 - HTML5/CSS3 with Glassmorphism UI
+- Vercel Deployment
 
 ## 📝 API Configuration
 
@@ -71,7 +82,7 @@ headers = {
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request or open an Issue for suggestions.
 
 ## 📜 License
 
