@@ -69,13 +69,17 @@ def home():
             # Send API request with timeout
             print("Sending request to RapidAPI...")
             print(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
+            print(f"Request URL: {url}")
+            print(f"Request Headers: {json.dumps(headers, indent=2)}")
+            print(f"Request Payload: {json.dumps(payload, indent=2)}")
+            
             response = requests.post(url, json=payload, headers=headers, timeout=30)
             print(f"Status Code: {response.status_code}")
-            print(f"Response Headers: {dict(response.headers)}")  # Log response headers
+            print(f"Response Headers: {dict(response.headers)}")
             
             if response.status_code == 200:
                 response_data = response.json()
-                print(f"Full Response Data: {json.dumps(response_data, indent=2)}")  # Pretty print response
+                print(f"Full Response Data: {json.dumps(response_data, indent=2)}")
                 
                 # Try different response structures
                 if isinstance(response_data, dict):
@@ -88,7 +92,7 @@ def home():
                                 answer = response_data[key][0] if response_data[key] else "No response generated."
                             else:
                                 answer = response_data[key]
-                            print(f"Found answer in key: {key}")  # Log which key was used
+                            print(f"Found answer in key: {key}")
                             break
                     else:
                         # Fallback if no known keys found
@@ -99,7 +103,7 @@ def home():
                     print("Response is not a dictionary, using raw response")
             else:
                 error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
-                print(f"API Error Response: {error_message}")  # Log error details
+                print(f"API Error Response: {error_message}")
                 answer = f"API Error: {error_message}"
                 
         except Timeout:
