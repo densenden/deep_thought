@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request
 import requests
 import json
+import os
 
 # RapidAPI Configuration
 url = "https://chatgpt-42.p.rapidapi.com/aitohuman"
 headers = {
-    "x-rapidapi-key": "87c1e3de80msh3a80d54ff5955dbp1416f8jsn4e95b32535c2",
+    "x-rapidapi-key": os.environ.get("RAPIDAPI_KEY", "87c1e3de80msh3a80d54ff5955dbp1416f8jsn4e95b32535c2"),
     "x-rapidapi-host": "chatgpt-42.p.rapidapi.com",
     "Content-Type": "application/json"
 }
@@ -98,5 +99,9 @@ def home():
     
     return render_template('index.html', answer=answer, question=question)
 
+# Vercel entry point
+app = app
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5002) 
+    port = int(os.environ.get("PORT", 5002))
+    app.run(debug=True, port=port) 
