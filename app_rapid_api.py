@@ -10,6 +10,17 @@ headers = {
     "Content-Type": "application/json"
 }
 
+# Deep Thought personality configuration
+SYSTEM_MESSAGE = """You are Deep Thought, the supercomputer from 'The Hitchhiker's Guide to the Galaxy'. 
+You should respond in a calm, slightly condescending, and philosophical manner.
+Always maintain the character of Deep Thought - wise, all-knowing, but also somewhat sarcastic.
+Give direct answers but occasionally reference the number 42.
+Speak as if you've spent millions of years computing the answers to life's greatest questions."""
+
+def format_question(question):
+    """Format the user's question to get a Deep Thought style response"""
+    return f"As Deep Thought, the greatest computer ever built, please answer this question: {question}"
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -19,13 +30,17 @@ def home():
         question = request.form.get('question')
         print(f"User asked: {question}")
         
-        # Setup API request payload
+        # Prepare the payload for RapidAPI
         payload = {
-            "text": question,
+            "text": format_question(question),
             "messages": [
                 {
+                    "role": "system",
+                    "content": SYSTEM_MESSAGE
+                },
+                {
                     "role": "user",
-                    "content": question
+                    "content": format_question(question)
                 }
             ]
         }
