@@ -11,5 +11,10 @@
             "src": "/(.*)",
             "dest": "app_rapid_api.py"
         }
-    ]
+    ],
+    "functions": {
+        "app_rapid_api.py": {
+            "maxDuration": 60
+        }
+    }
 } 
