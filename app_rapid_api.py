@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import requests
 import json
 import os
@@ -122,7 +122,14 @@ def home():
         except Exception as e:
             log_to_vercel(f"Error: {str(e)}")
             answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
+        
+        # Return JSON response for AJAX requests
+        return jsonify({
+            "answer": answer,
+            "question": question
+        })
     
+    # For GET requests, render the template
     return render_template('index.html', answer=answer, question=question)
 
 # Vercel entry point
