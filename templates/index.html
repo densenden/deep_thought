@@ -114,6 +114,11 @@
         #answer-box.visible {
             opacity: 1;
         }
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -137,10 +142,8 @@
             </div>
             <p class="loading-text">Skipping 7.5 million years with quantum computing... <span id="progress-text">0</span>%</p>
         </div>
-        <div id="answer-box">
-            {% if question %}
-            <p class="previous-question">You asked: {{ question }}</p>
-            {% endif %}
+        <div id="answer-box" class="visible">
+            <p class="previous-question" id="asked-question">{% if question %}You asked: {{ question }}{% endif %}</p>
             <p id="answer">{{ answer }}</p>
         </div>
     </div>
@@ -155,10 +158,14 @@
 document.getElementById('question-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Hide answer and show loading
+    const question = document.getElementById('question').value;
     const answerBox = document.getElementById('answer-box');
     const loadingContainer = document.getElementById('loading-container');
-    answerBox.style.opacity = '0';
+    const askedQuestion = document.getElementById('asked-question');
+    const answerText = document.getElementById('answer');
+    
+    // Hide answer and show loading
+    answerBox.classList.remove('visible');
     loadingContainer.style.display = 'block';
     
     // Simulate loading progress
@@ -175,9 +182,30 @@ document.getElementById('question-form').addEventListener('submit', function(e) 
             clearInterval(interval);
             setTimeout(() => {
                 loadingContainer.style.display = 'none';
-                answerBox.style.opacity = '1';
-                // Submit the form for real
-                this.submit();
+                // Make the API call
+                fetch('/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `question=${encodeURIComponent(question)}`
+                })
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the response HTML to get the answer
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newAnswer = doc.getElementById('answer').textContent;
+                    
+                    // Update the answer and question
+                    askedQuestion.textContent = `You asked: ${question}`;
+                    answerText.textContent = newAnswer;
+                    answerBox.classList.add('visible');
+                })
+                .catch(error => {
+                    answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
+                    answerBox.classList.add('visible');
+                });
             }, 500);
         }
     }, 100); // Will take 10 seconds to complete
