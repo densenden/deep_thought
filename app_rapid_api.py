@@ -79,7 +79,8 @@ def home():
             log_to_vercel(f"Request Headers: {json.dumps(headers, indent=2)}")
             log_to_vercel(f"Request Payload: {json.dumps(payload, indent=2)}")
             
-            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            # Reduced timeout to 25 seconds to stay within Vercel's limit
+            response = requests.post(url, json=payload, headers=headers, timeout=25)
             log_to_vercel(f"Status Code: {response.status_code}")
             log_to_vercel(f"Response Headers: {dict(response.headers)}")
             
