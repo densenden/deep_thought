@@ -68,12 +68,14 @@ def home():
         try:
             # Send API request with timeout
             print("Sending request to RapidAPI...")
+            print(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
             response = requests.post(url, json=payload, headers=headers, timeout=30)
             print(f"Status Code: {response.status_code}")
+            print(f"Response Headers: {dict(response.headers)}")  # Log response headers
             
             if response.status_code == 200:
                 response_data = response.json()
-                print(f"Parsed Response: {response_data}")
+                print(f"Full Response Data: {json.dumps(response_data, indent=2)}")  # Pretty print response
                 
                 # Try different response structures
                 if isinstance(response_data, dict):
@@ -86,14 +88,18 @@ def home():
                                 answer = response_data[key][0] if response_data[key] else "No response generated."
                             else:
                                 answer = response_data[key]
+                            print(f"Found answer in key: {key}")  # Log which key was used
                             break
                     else:
                         # Fallback if no known keys found
                         answer = str(response_data)
+                        print("No known response keys found, using raw response")
                 else:
                     answer = str(response_data)
+                    print("Response is not a dictionary, using raw response")
             else:
                 error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
+                print(f"API Error Response: {error_message}")  # Log error details
                 answer = f"API Error: {error_message}"
                 
         except Timeout:
