@@ -5,6 +5,8 @@ import os
 from requests.exceptions import Timeout, RequestException
 from dotenv import load_dotenv
 import sys
+from models import QARecord, get_db
+from sqlalchemy.orm import Session
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +53,10 @@ app = Flask(__name__)
 def home():
     answer = "I am Deep Thought, the greatest computer ever built. Ask me anything."
     question = ""
+    
+    # Get recent Q&A records
+    db = next(get_db())
+    recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
     
     if request.method == 'POST':
         question = request.form.get('question')
@@ -123,14 +129,35 @@ def home():
             log_to_vercel(f"Error: {str(e)}")
             answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
         
+        # Save to database
+        try:
+            qa_record = QARecord(question=question, answer=answer)
+            db.add(qa_record)
+            db.commit()
+            # Refresh recent records
+            recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
+        except Exception as e:
+            log_to_vercel(f"Database error: {str(e)}")
+        
         # Return JSON response for AJAX requests
         return jsonify({
             "answer": answer,
-            "question": question
+            "question": question,
+            "recent_records": [
+                {
+                    "question": record.question,
+                    "answer": record.answer,
+                    "timestamp": record.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                }
+                for record in recent_records
+            ]
         })
     
     # For GET requests, render the template
-    return render_template('index.html', answer=answer, question=question)
+    return render_template('index.html', 
+                         answer=answer, 
+                         question=question,
+                         recent_records=recent_records)
 
 # Vercel entry point
 app = app

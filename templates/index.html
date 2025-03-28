@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deep Thought - The Answer to Life, the Universe, and Everything</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body, input {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Epilogue', sans-serif;
         }
         body {
             padding: 20px;
@@ -244,6 +244,65 @@
                 bottom: 10px;
             }
         }
+
+        .history-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            padding: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .history-box {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            background: rgba(22, 33, 62, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .history-box h3 {
+            color: #42b883;
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+
+        .history-box .timestamp {
+            color: #42b883;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+
+        .history-box .question {
+            color: #e6e6e6;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .history-box .answer {
+            color: #e6e6e6;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .history-box {
+                min-width: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .history-box {
+                min-width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -287,6 +346,17 @@
         </div>
     </div>
 
+    <div class="history-container">
+        {% for record in recent_records %}
+        <div class="history-box">
+            <h3>Previous Interaction</h3>
+            <div class="timestamp">{{ record.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            <div class="question">Q: {{ record.question }}</div>
+            <div class="answer">A: {{ record.answer }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
     <div class="logo-container">
         <img src="{{ url_for('static', filename='images/StudioSen2024slim_42.svg') }}" alt="StudioSen Logo">
     </div>
@@ -300,6 +370,7 @@
         const loadingContainer = document.getElementById('loading-container');
         const askedQuestion = document.getElementById('asked-question');
         const answerText = document.getElementById('answer');
+        const historyContainer = document.querySelector('.history-container');
         
         // Hide answer and show loading
         answerBox.classList.remove('visible');
@@ -320,39 +391,20 @@
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.text();
+            return response.json();
         })
-        .then(html => {
-            try {
-                // Try to parse the response as JSON first
-                const jsonMatch = html.match(/\{.*\}/);
-                if (jsonMatch) {
-                    const jsonData = JSON.parse(jsonMatch[0]);
-                    apiResponse = jsonData.answer || jsonData.response || jsonData.message || "No answer found in response.";
-                    return;
-                }
-                
-                // If not JSON, try to parse as HTML
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const answerElement = doc.getElementById('answer');
-                
-                if (answerElement) {
-                    apiResponse = answerElement.textContent;
-                    return;
-                }
-                
-                // If no answer element found, try to find any text content
-                const textContent = doc.body.textContent;
-                if (textContent) {
-                    apiResponse = textContent.trim();
-                    return;
-                }
-                
-                apiResponse = "I apologize, but I seem to be experiencing a temporary computational anomaly.";
-            } catch (error) {
-                console.error('Error parsing response:', error);
-                apiResponse = "I apologize, but I seem to be experiencing a temporary computational anomaly.";
+        .then(data => {
+            apiResponse = data.answer;
+            // Update history
+            if (data.recent_records) {
+                historyContainer.innerHTML = data.recent_records.map(record => `
+                    <div class="history-box">
+                        <h3>Previous Interaction</h3>
+                        <div class="timestamp">${record.timestamp}</div>
+                        <div class="question">Q: ${record.question}</div>
+                        <div class="answer">A: ${record.answer}</div>
+                    </div>
+                `).join('');
             }
         })
         .catch(error => {
