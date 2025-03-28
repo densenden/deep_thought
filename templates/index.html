@@ -132,10 +132,6 @@
             font-size: 0.9em;
         }
         #answer-box {
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        #answer-box.visible {
             opacity: 1;
         }
         .error-message {
@@ -320,21 +316,7 @@
 
         <div class="glass-box">
             <h2>Deep Thought's Answer</h2>
-            <div class="loading-container" id="loading-container">
-                <div class="loading-text">Computing the complexities of your inquiry...</div>
-                <div class="loading-status">
-                    <span id="progress-text">0</span>%
-                </div>
-                <div class="progress-bar">
-                    <div class="progress" id="progress"></div>
-                </div>
-                <div class="loading-text">
-                    Bypassing 7.5 million years of calculation<br>
-                    through quantum temporal mechanics...<br>
-                    <small>(Don't worry, I've had plenty of time to think about this)</small>
-                </div>
-            </div>
-            <div id="answer-box" class="visible">
+            <div id="answer-box">
                 <p class="previous-question" id="asked-question">{% if question %}You asked: {{ question }}{% endif %}</p>
                 <p id="answer">{{ answer }}</p>
             </div>
@@ -367,17 +349,9 @@
         
         const question = document.getElementById('question').value;
         const answerBox = document.getElementById('answer-box');
-        const loadingContainer = document.getElementById('loading-container');
         const askedQuestion = document.getElementById('asked-question');
         const answerText = document.getElementById('answer');
         const historyContainer = document.querySelector('.history-container');
-        
-        // Hide answer and show loading
-        answerBox.classList.remove('visible');
-        loadingContainer.style.display = 'block';
-        
-        let apiResponse = null;
-        let apiError = null;
         
         // Start the API call immediately
         fetch('/', {
@@ -394,7 +368,9 @@
             return response.json();
         })
         .then(data => {
-            apiResponse = data.answer;
+            askedQuestion.textContent = `You asked: ${question}`;
+            answerText.textContent = data.answer;
+            
             // Update history
             if (data.recent_records) {
                 historyContainer.innerHTML = data.recent_records.map(record => `
@@ -409,36 +385,8 @@
         })
         .catch(error => {
             console.error('API Error:', error);
-            apiError = error;
+            answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
         });
-        
-        // Simulate loading progress
-        let progress = 0;
-        const progressBar = document.getElementById('progress');
-        const progressText = document.getElementById('progress-text');
-        
-        const interval = setInterval(() => {
-            progress += 0.75; // Adjusted for ~13 seconds duration
-            progressBar.style.width = `${progress}%`;
-            progressText.textContent = Math.round(progress);
-            
-            if (progress >= 100) {
-                clearInterval(interval);
-                // Wait a moment after the progress bar reaches 100%
-                setTimeout(() => {
-                    loadingContainer.style.display = 'none';
-                    askedQuestion.textContent = `You asked: ${question}`;
-                    
-                    if (apiError) {
-                        answerText.innerHTML = `<span class="error-message">Error: ${apiError.message}</span>`;
-                    } else {
-                        answerText.textContent = apiResponse || "I apologize, but I seem to be experiencing a temporal anomaly. Please try again.";
-                    }
-                    
-                    answerBox.classList.add('visible');
-                }, 500);
-            }
-        }, 100); // Update every 100ms
     });
     </script>
 </body>
