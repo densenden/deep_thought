@@ -53,10 +53,11 @@ app = Flask(__name__)
 def home():
     answer = "I am Deep Thought, the greatest computer ever built. Ask me anything."
     question = ""
+    recent_records = []
     
     # Get recent Q&A records
-    db = next(get_db())
-    recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
+    with get_db() as db:
+        recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
     
     if request.method == 'POST':
         question = request.form.get('question')
@@ -131,11 +132,12 @@ def home():
         
         # Save to database
         try:
-            qa_record = QARecord(question=question, answer=answer)
-            db.add(qa_record)
-            db.commit()
-            # Refresh recent records
-            recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
+            with get_db() as db:
+                qa_record = QARecord(question=question, answer=answer)
+                db.add(qa_record)
+                db.commit()
+                # Refresh recent records
+                recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
         except Exception as e:
             log_to_vercel(f"Database error: {str(e)}")
         

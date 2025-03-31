@@ -5,7 +5,8 @@
             "src": "app_rapid_api.py",
             "use": "@vercel/python",
             "config": {
-                "maxDuration": 60
+                "maxDuration": 300,
+                "runtime": "python3.12"
             }
         }
     ],
