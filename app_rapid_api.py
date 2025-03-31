@@ -5,8 +5,10 @@ import os
 from requests.exceptions import Timeout, RequestException
 from dotenv import load_dotenv
 import sys
+import traceback
 from models import QARecord, get_db
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 # Load environment variables
 load_dotenv()
@@ -49,117 +51,138 @@ def format_question(question):
 
 app = Flask(__name__)
 
+@app.errorhandler(500)
+def internal_error(error):
+    log_to_vercel(f"Internal Server Error: {str(error)}")
+    log_to_vercel("Traceback:")
+    log_to_vercel(traceback.format_exc())
+    return jsonify({"error": "Internal Server Error", "message": "An unexpected error occurred"}), 500
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    answer = "I am Deep Thought, the greatest computer ever built. Ask me anything."
-    question = ""
-    recent_records = []
-    
-    # Get recent Q&A records
-    with get_db() as db:
-        recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
-    
-    if request.method == 'POST':
-        question = request.form.get('question')
-        log_to_vercel(f"User asked: {question}")
+    try:
+        answer = "I am Deep Thought, the greatest computer ever built. Ask me anything."
+        question = ""
+        recent_records = []
         
-        # Prepare the payload for RapidAPI
-        payload = {
-            "text": format_question(question),
-            "messages": [
-                {
-                    "role": "system",
-                    "content": SYSTEM_MESSAGE
-                },
-                {
-                    "role": "user",
-                    "content": format_question(question)
-                }
-            ]
-        }
-        
-        try:
-            # Send API request with timeout
-            log_to_vercel("Sending request to RapidAPI...")
-            log_to_vercel(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
-            log_to_vercel(f"Request URL: {url}")
-            log_to_vercel(f"Request Headers: {json.dumps(headers, indent=2)}")
-            log_to_vercel(f"Request Payload: {json.dumps(payload, indent=2)}")
-            
-            # Reduced timeout to 25 seconds to stay within Vercel's limit
-            response = requests.post(url, json=payload, headers=headers, timeout=25)
-            log_to_vercel(f"Status Code: {response.status_code}")
-            log_to_vercel(f"Response Headers: {dict(response.headers)}")
-            
-            if response.status_code == 200:
-                response_data = response.json()
-                log_to_vercel(f"Full Response Data: {json.dumps(response_data, indent=2)}")
-                
-                # Try different response structures
-                if isinstance(response_data, dict):
-                    # Check common response keys
-                    possible_keys = ['response', 'content', 'message', 'result', 'generated_text', 'choices']
-                    for key in possible_keys:
-                        if key in response_data:
-                            if isinstance(response_data[key], list):
-                                # Get first element if response is a list
-                                answer = response_data[key][0] if response_data[key] else "No response generated."
-                            else:
-                                answer = response_data[key]
-                            log_to_vercel(f"Found answer in key: {key}")
-                            break
-                    else:
-                        # Fallback if no known keys found
-                        answer = str(response_data)
-                        log_to_vercel("No known response keys found, using raw response")
-                else:
-                    answer = str(response_data)
-                    log_to_vercel("Response is not a dictionary, using raw response")
-            else:
-                error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
-                log_to_vercel(f"API Error Response: {error_message}")
-                answer = f"API Error: {error_message}"
-                
-        except Timeout:
-            log_to_vercel("Request timed out")
-            answer = "I apologize, but my quantum processors seem to be experiencing a temporal dilation. Please try again in a moment."
-        except RequestException as e:
-            log_to_vercel(f"Request error: {str(e)}")
-            answer = "I apologize, but my neural pathways are temporarily misaligned. Please try again in a moment."
-        except Exception as e:
-            log_to_vercel(f"Error: {str(e)}")
-            answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
-        
-        # Save to database
+        # Get recent Q&A records
         try:
             with get_db() as db:
-                qa_record = QARecord(question=question, answer=answer)
-                db.add(qa_record)
-                db.commit()
-                # Refresh recent records
                 recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
-        except Exception as e:
-            log_to_vercel(f"Database error: {str(e)}")
+        except SQLAlchemyError as e:
+            log_to_vercel(f"Database error while fetching records: {str(e)}")
+            log_to_vercel(traceback.format_exc())
+            recent_records = []
         
-        # Return JSON response for AJAX requests
-        return jsonify({
-            "answer": answer,
-            "question": question,
-            "recent_records": [
-                {
-                    "question": record.question,
-                    "answer": record.answer,
-                    "timestamp": record.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                }
-                for record in recent_records
-            ]
-        })
-    
-    # For GET requests, render the template
-    return render_template('index.html', 
-                         answer=answer, 
-                         question=question,
-                         recent_records=recent_records)
+        if request.method == 'POST':
+            question = request.form.get('question')
+            log_to_vercel(f"User asked: {question}")
+            
+            # Prepare the payload for RapidAPI
+            payload = {
+                "text": format_question(question),
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": SYSTEM_MESSAGE
+                    },
+                    {
+                        "role": "user",
+                        "content": format_question(question)
+                    }
+                ]
+            }
+            
+            try:
+                # Send API request with timeout
+                log_to_vercel("Sending request to RapidAPI...")
+                log_to_vercel(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
+                log_to_vercel(f"Request URL: {url}")
+                log_to_vercel(f"Request Headers: {json.dumps(headers, indent=2)}")
+                log_to_vercel(f"Request Payload: {json.dumps(payload, indent=2)}")
+                
+                # Reduced timeout to 25 seconds to stay within Vercel's limit
+                response = requests.post(url, json=payload, headers=headers, timeout=25)
+                log_to_vercel(f"Status Code: {response.status_code}")
+                log_to_vercel(f"Response Headers: {dict(response.headers)}")
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    log_to_vercel(f"Full Response Data: {json.dumps(response_data, indent=2)}")
+                    
+                    # Try different response structures
+                    if isinstance(response_data, dict):
+                        # Check common response keys
+                        possible_keys = ['response', 'content', 'message', 'result', 'generated_text', 'choices']
+                        for key in possible_keys:
+                            if key in response_data:
+                                if isinstance(response_data[key], list):
+                                    # Get first element if response is a list
+                                    answer = response_data[key][0] if response_data[key] else "No response generated."
+                                else:
+                                    answer = response_data[key]
+                                log_to_vercel(f"Found answer in key: {key}")
+                                break
+                        else:
+                            # Fallback if no known keys found
+                            answer = str(response_data)
+                            log_to_vercel("No known response keys found, using raw response")
+                    else:
+                        answer = str(response_data)
+                        log_to_vercel("Response is not a dictionary, using raw response")
+                else:
+                    error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
+                    log_to_vercel(f"API Error Response: {error_message}")
+                    answer = f"API Error: {error_message}"
+                    
+            except Timeout:
+                log_to_vercel("Request timed out")
+                answer = "I apologize, but my quantum processors seem to be experiencing a temporal dilation. Please try again in a moment."
+            except RequestException as e:
+                log_to_vercel(f"Request error: {str(e)}")
+                log_to_vercel(traceback.format_exc())
+                answer = "I apologize, but my neural pathways are temporarily misaligned. Please try again in a moment."
+            except Exception as e:
+                log_to_vercel(f"Error: {str(e)}")
+                log_to_vercel(traceback.format_exc())
+                answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
+            
+            # Save to database
+            try:
+                with get_db() as db:
+                    qa_record = QARecord(question=question, answer=answer)
+                    db.add(qa_record)
+                    db.commit()
+                    # Refresh recent records
+                    recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
+            except SQLAlchemyError as e:
+                log_to_vercel(f"Database error while saving record: {str(e)}")
+                log_to_vercel(traceback.format_exc())
+            
+            # Return JSON response for AJAX requests
+            return jsonify({
+                "answer": answer,
+                "question": question,
+                "recent_records": [
+                    {
+                        "question": record.question,
+                        "answer": record.answer,
+                        "timestamp": record.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    for record in recent_records
+                ]
+            })
+        
+        # For GET requests, render the template
+        return render_template('index.html', 
+                             answer=answer, 
+                             question=question,
+                             recent_records=recent_records)
+                             
+    except Exception as e:
+        log_to_vercel(f"Unexpected error in home route: {str(e)}")
+        log_to_vercel(traceback.format_exc())
+        return jsonify({"error": "Internal Server Error", "message": "An unexpected error occurred"}), 500
 
 # Vercel entry point
 app = app
