@@ -68,16 +68,19 @@ def home():
         # Get recent Q&A records
         try:
             with get_db() as db:
+                log_to_vercel("Versuche Datenbankeinträge abzurufen...")
                 recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
-                log_to_vercel(f"Successfully fetched {len(recent_records)} recent records")
+                log_to_vercel(f"Erfolgreich {len(recent_records)} Einträge abgerufen")
+                for record in recent_records:
+                    log_to_vercel(f"Gefundener Eintrag: Frage='{record.question[:30]}...', Antwort='{record.answer[:30]}...'")
         except SQLAlchemyError as e:
-            log_to_vercel(f"Database error while fetching records: {str(e)}")
+            log_to_vercel(f"Datenbankfehler beim Abrufen der Einträge: {str(e)}")
             log_to_vercel(traceback.format_exc())
             recent_records = []
         
         if request.method == 'POST':
             question = request.form.get('question')
-            log_to_vercel(f"User asked: {question}")
+            log_to_vercel(f"Benutzer hat gefragt: {question}")
             
             # Prepare the payload for RapidAPI
             payload = {
@@ -96,70 +99,63 @@ def home():
             
             try:
                 # Send API request with timeout
-                log_to_vercel("Sending request to RapidAPI...")
-                log_to_vercel(f"Using API Key: {headers['x-rapidapi-key'][:8]}...")  # Log first 8 chars of API key
-                log_to_vercel(f"Request URL: {url}")
-                log_to_vercel(f"Request Headers: {json.dumps(headers, indent=2)}")
-                log_to_vercel(f"Request Payload: {json.dumps(payload, indent=2)}")
+                log_to_vercel("Sende Anfrage an RapidAPI...")
+                log_to_vercel(f"Verwende API Key: {headers['x-rapidapi-key'][:8]}...")
+                log_to_vercel(f"Anfrage URL: {url}")
                 
-                # Reduced timeout to 25 seconds to stay within Vercel's limit
                 response = requests.post(url, json=payload, headers=headers, timeout=25)
                 log_to_vercel(f"Status Code: {response.status_code}")
-                log_to_vercel(f"Response Headers: {dict(response.headers)}")
                 
                 if response.status_code == 200:
                     response_data = response.json()
-                    log_to_vercel(f"Full Response Data: {json.dumps(response_data, indent=2)}")
+                    log_to_vercel(f"Vollständige Antwortdaten: {json.dumps(response_data, indent=2)}")
                     
-                    # Try different response structures
                     if isinstance(response_data, dict):
-                        # Check common response keys
                         possible_keys = ['response', 'content', 'message', 'result', 'generated_text', 'choices']
                         for key in possible_keys:
                             if key in response_data:
                                 if isinstance(response_data[key], list):
-                                    # Get first element if response is a list
                                     answer = response_data[key][0] if response_data[key] else "No response generated."
                                 else:
                                     answer = response_data[key]
-                                log_to_vercel(f"Found answer in key: {key}")
+                                log_to_vercel(f"Antwort gefunden in Key: {key}")
                                 break
                         else:
-                            # Fallback if no known keys found
                             answer = str(response_data)
-                            log_to_vercel("No known response keys found, using raw response")
+                            log_to_vercel("Keine bekannten Antwort-Keys gefunden, verwende rohe Antwort")
                     else:
                         answer = str(response_data)
-                        log_to_vercel("Response is not a dictionary, using raw response")
+                        log_to_vercel("Antwort ist kein Dictionary, verwende rohe Antwort")
                 else:
                     error_message = response.json().get('message', response.text) if response.text else f"HTTP {response.status_code}"
-                    log_to_vercel(f"API Error Response: {error_message}")
+                    log_to_vercel(f"API Fehlerantwort: {error_message}")
                     answer = f"API Error: {error_message}"
                     
             except Timeout:
-                log_to_vercel("Request timed out")
+                log_to_vercel("Anfrage hat Zeitüberschreitung")
                 answer = "I apologize, but my quantum processors seem to be experiencing a temporal dilation. Please try again in a moment."
             except RequestException as e:
-                log_to_vercel(f"Request error: {str(e)}")
+                log_to_vercel(f"Anfragefehler: {str(e)}")
                 log_to_vercel(traceback.format_exc())
                 answer = "I apologize, but my neural pathways are temporarily misaligned. Please try again in a moment."
             except Exception as e:
-                log_to_vercel(f"Error: {str(e)}")
+                log_to_vercel(f"Fehler: {str(e)}")
                 log_to_vercel(traceback.format_exc())
                 answer = "I apologize, but I seem to be experiencing a temporary computational anomaly."
             
             # Save to database
             try:
                 with get_db() as db:
+                    log_to_vercel("Versuche neuen Eintrag in Datenbank zu speichern...")
                     qa_record = QARecord(question=question, answer=answer)
                     db.add(qa_record)
                     db.commit()
-                    log_to_vercel("Successfully saved new Q&A record to database")
+                    log_to_vercel("Neuer Eintrag erfolgreich gespeichert")
                     # Refresh recent records
                     recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
-                    log_to_vercel(f"Successfully fetched {len(recent_records)} recent records after save")
+                    log_to_vercel(f"Erfolgreich {len(recent_records)} aktuelle Einträge abgerufen")
             except SQLAlchemyError as e:
-                log_to_vercel(f"Database error while saving record: {str(e)}")
+                log_to_vercel(f"Datenbankfehler beim Speichern: {str(e)}")
                 log_to_vercel(traceback.format_exc())
             
             # Return JSON response for AJAX requests
@@ -183,7 +179,7 @@ def home():
                              recent_records=recent_records)
                              
     except Exception as e:
-        log_to_vercel(f"Unexpected error in home route: {str(e)}")
+        log_to_vercel(f"Unerwarteter Fehler in home route: {str(e)}")
         log_to_vercel(traceback.format_exc())
         return jsonify({"error": "Internal Server Error", "message": "An unexpected error occurred"}), 500
 
