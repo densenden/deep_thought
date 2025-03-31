@@ -12,7 +12,11 @@ from contextlib import contextmanager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:bqs4?f7+*QLqvM*@db.xbrrlnaycpvygaqzeceg.supabase.co:5432/postgres")
+# Hole die Datenbank-URL aus den Umgebungsvariablen
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    logger.error("DATABASE_URL Umgebungsvariable ist nicht gesetzt!")
+    raise ValueError("DATABASE_URL Umgebungsvariable ist nicht gesetzt!")
 
 # Verbindungsoptionen für Serverless-Umgebungen
 engine = create_engine(
@@ -43,8 +47,8 @@ class QARecord(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
 
 def init_db():
-    max_retries = 2  # Reduzierte Anzahl von Versuchen
-    retry_delay = 2  # Kürzere Wartezeit
+    max_retries = 3  # Erhöhte Anzahl von Versuchen
+    retry_delay = 3  # Längere Wartezeit
     
     for attempt in range(max_retries):
         try:
