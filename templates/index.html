@@ -368,11 +368,13 @@
             return response.json();
         })
         .then(data => {
+            console.log('Received data:', data); // Debug-Log
             askedQuestion.textContent = `You asked: ${question}`;
             answerText.textContent = data.answer;
             
             // Update history
-            if (data.recent_records) {
+            if (data.recent_records && Array.isArray(data.recent_records)) {
+                console.log('Updating history with records:', data.recent_records); // Debug-Log
                 historyContainer.innerHTML = data.recent_records.map(record => `
                     <div class="history-box">
                         <h3>Previous Interaction</h3>
@@ -381,12 +383,34 @@
                         <div class="answer">A: ${record.answer}</div>
                     </div>
                 `).join('');
+            } else {
+                console.log('No recent records found in data'); // Debug-Log
             }
         })
         .catch(error => {
             console.error('API Error:', error);
             answerText.innerHTML = `<span class="error-message">Error: ${error.message}</span>`;
         });
+    });
+
+    // Initial history display
+    document.addEventListener('DOMContentLoaded', function() {
+        const historyContainer = document.querySelector('.history-container');
+        const recentRecords = {{ recent_records|tojson|safe }};
+        
+        if (recentRecords && recentRecords.length > 0) {
+            console.log('Initial history records:', recentRecords); // Debug-Log
+            historyContainer.innerHTML = recentRecords.map(record => `
+                <div class="history-box">
+                    <h3>Previous Interaction</h3>
+                    <div class="timestamp">${record.timestamp}</div>
+                    <div class="question">Q: ${record.question}</div>
+                    <div class="answer">A: ${record.answer}</div>
+                </div>
+            `).join('');
+        } else {
+            console.log('No initial history records found'); // Debug-Log
+        }
     });
     </script>
 </body>
