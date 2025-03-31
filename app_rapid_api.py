@@ -69,6 +69,7 @@ def home():
         try:
             with get_db() as db:
                 recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
+                log_to_vercel(f"Successfully fetched {len(recent_records)} recent records")
         except SQLAlchemyError as e:
             log_to_vercel(f"Database error while fetching records: {str(e)}")
             log_to_vercel(traceback.format_exc())
@@ -153,8 +154,10 @@ def home():
                     qa_record = QARecord(question=question, answer=answer)
                     db.add(qa_record)
                     db.commit()
+                    log_to_vercel("Successfully saved new Q&A record to database")
                     # Refresh recent records
                     recent_records = db.query(QARecord).order_by(QARecord.timestamp.desc()).limit(5).all()
+                    log_to_vercel(f"Successfully fetched {len(recent_records)} recent records after save")
             except SQLAlchemyError as e:
                 log_to_vercel(f"Database error while saving record: {str(e)}")
                 log_to_vercel(traceback.format_exc())

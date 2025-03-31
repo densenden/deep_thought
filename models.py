@@ -76,9 +76,11 @@ except Exception as e:
 def get_db():
     db = SessionLocal()
     try:
+        logger.info("Datenbankverbindung hergestellt")
         yield db
     except Exception as e:
         logger.error(f"Fehler bei der Datenbankverbindung: {str(e)}")
         raise
     finally:
-        db.close() 
+        db.close()
+        logger.info("Datenbankverbindung geschlossen") 
